@@ -59,45 +59,44 @@ std::vector<double> Parallel_method(std::vector<double> vect, int n_elem) {
             expons = calc_exp_pow_num(vect);
             return expons;
         }
-        for (int i = 0; i < n_elem; i++) {
+        for (int i = 0; i < n_elem; ++i) {
             MPI_Status status;
             MPI_Recv(&buf, 1, MPI_DOUBLE,
                 MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
             if (status.MPI_TAG > 0) {
-                expons[status.MPI_TAG] = buf;
+                expons[status.MPI_TAG - 1] = buf;
             }
-            MPI_Send(&vect[i], 1, MPI_DOUBLE, status.MPI_SOURCE,
+            MPI_Send(&vect[i - 1], 1, MPI_DOUBLE, status.MPI_SOURCE,
                 i, MPI_COMM_WORLD);
         }
-        int j = 0;
-        for (j = 0; j < totnodes - 1; j++) {
+        int k = 0;
+        for (int j = 0; j < totnodes - 1; j++) {
             MPI_Status status;
             // double buf = 0;
             MPI_Recv(&buf, 1, MPI_DOUBLE,
                 MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
             if (status.MPI_TAG > 0) {
-                expons[status.MPI_TAG] = buf;
+                expons[status.MPI_TAG - 1] = buf;
             }
-            MPI_Send(&buf, 1, MPI_INT, status.MPI_SOURCE,
+            MPI_Send(&k, 1, MPI_INT, status.MPI_SOURCE,
                 0, MPI_COMM_WORLD);
         }
     } else {  // consumer
         MPI_Status status;
         buf = 0;
-        for (int j = 0; j < n_elem; j++) {
-            MPI_Send(&buf, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
-            int killed = 0;
-            do {
-                double n = 0;
-                MPI_Recv(&n, 1, MPI_DOUBLE, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-                if (status.MPI_TAG == 0) {
-                    killed++;
-                } else {
-                    buf = exp(n);
-                    MPI_Send(&buf, 1, MPI_DOUBLE, 0, status.MPI_TAG, MPI_COMM_WORLD);
-                }
-            } while (killed != n_elem);
-        }
+        //for (int j = 0; j < n_elem; j++) {
+        MPI_Send(&buf, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+        int killed = 0;
+        do {
+            double n = 0;
+            MPI_Recv(&n, 1, MPI_DOUBLE, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+            if (status.MPI_TAG == 0) {
+                killed++;
+            } else {
+                buf = exp(n);
+                MPI_Send(&buf, 1, MPI_DOUBLE, 0, status.MPI_TAG, MPI_COMM_WORLD);
+            }
+        } while (killed != n_elem);
     }
     // MPI_Buffer_detach(message_buffer, &message_buffer_size);
     // free(message_buffer);
