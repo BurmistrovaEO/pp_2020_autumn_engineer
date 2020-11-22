@@ -13,14 +13,12 @@
 #include <iostream>
 #include "../../../modules/task_2/bourmistrova_e_producerconsumer/producerconsumer.h"
 
-std::vector<double> gen_input(int maxsz) {
-    std::mt19937 gener, gener1;
+std::vector<double> gen_input(int sz) {
+    std::mt19937 gener;
     gener.seed(static_cast<unsigned int>(time(0)));
-    int sz = gener() % maxsz;
     std::vector<double> vect(sz);
-    gener1.seed(static_cast<unsigned int>(time(0)));
     for (int i = 0; i < sz; i++) {
-        vect[i] = static_cast<double>(gener1() % 1000);
+        vect[i] = static_cast<double>(gener() % 1000);
     }
     return vect;
 }
@@ -71,6 +69,18 @@ std::vector<double> Parallel_method(std::vector<double> vect, int n_elem) {
             MPI_Send(&vect[i], 1, MPI_DOUBLE, status.MPI_SOURCE,
                 i, MPI_COMM_WORLD);
         }
+        int j = 0;
+        for (j = 0; j < totnodes - 1; j++) {
+            MPI_Status status;
+            // double buf = 0;
+            MPI_Recv(&buf, 1, MPI_DOUBLE,
+                MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+            if (status.MPI_TAG > 0) {
+                expons[status.MPI_TAG] = buf;
+            }
+            MPI_Send(&buf, 1, MPI_INT, status.MPI_SOURCE,
+                0, MPI_COMM_WORLD);
+        }
     } else {  // consumer
         MPI_Status status;
         buf = 0;
@@ -91,6 +101,6 @@ std::vector<double> Parallel_method(std::vector<double> vect, int n_elem) {
     }
     // MPI_Buffer_detach(message_buffer, &message_buffer_size);
     // free(message_buffer);
-    return expons;
     MPI_Barrier(MPI_COMM_WORLD);
+    return expons;
 }
