@@ -29,74 +29,45 @@ std::vector<double> calc_exp_pow_num(std::vector<double> vec) {
     }
     return exps;
 }
-/*double produce()
-{
-	std::mt19937 gener;
-	gener.seed(static_cast<unsigned int>(time(0)));
-	return (double)(gener() % 1000);
-}
 
-void consume()
-{
-
-}*/
 std::vector<double> Parallel_method(std::vector<double> vect, int n_elem) {
     int mynode;
     int totnodes;
-    std::vector<double> expons;
-    // int message_buffer_size = n_elem * sizeof(double) + MPI_BSEND_OVERHEAD;
-    // double* message_buffer = (double*)malloc(message_buffer_size);
-    // MPI_Buffer_attach(message_buffer, message_buffer_size);
-    // int par_sum, inter;
-    // int blocked = 1; // consumer_status
-    // int free = 1; // producer status
-    // int delta = n_elem %
+    std::vector<double> expons(n_elem);
     MPI_Comm_size(MPI_COMM_WORLD, &totnodes);
     MPI_Comm_rank(MPI_COMM_WORLD, &mynode);
-    double buf = 0;
-    if (mynode == 0) {  // producer
-        if (totnodes == 1) {
+    double *buf;
+    MPI_Request *requests;
+    MPI_Status status;
+    if (totnodes == 1) {
+        if (mynode == 0)
             expons = calc_exp_pow_num(vect);
-            return expons;
-        }
-        for (int i = 0; i < n_elem; ++i) {
-            MPI_Status status;
-            MPI_Recv(&buf, 1, MPI_DOUBLE,
-                MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-            if (status.MPI_TAG > 0) {
-                expons[status.MPI_TAG - 1] = buf;
+        return expons;
+    } else {
+        if (mynode == totnodes - 1) {  // consumer
+            buf = new double(sizeof(double)*(totnodes - 1));
+            requests = new MPI_Request(sizeof(MPI_Request)*(totnodes - 1));
+            for (int i = 0; i < totnodes - 1; i++) {  /* main loop*/
+                requests[i] = MPI_REQUEST_NULL;
+                for (int j = 0; j < n_elem; j++) {
+                    MPI_Waitany(totnodes - 1, requests, &i, &status);
+                    if (i == MPI_UNDEFINED) {
+                        for (int k = 0; k < totnodes - 1; k++)
+                            MPI_Irecv(buf, 1, MPI_DOUBLE, j, status.MPI_TAG, MPI_COMM_WORLD, &requests[j]);
+                    } else {
+                        MPI_Get_count(&status, MPI_DOUBLE, &n_elem);
+                        expons[i] = buf[i];
+                    }
+                }
             }
-            MPI_Send(&vect[i - 1], 1, MPI_DOUBLE, status.MPI_SOURCE,
-                i, MPI_COMM_WORLD);
-        }
-        int k = 0;
-        for (int j = 0; j < totnodes - 1; j++) {
-            MPI_Status status;
-            // double buf = 0;
-            MPI_Recv(&buf, 1, MPI_DOUBLE,
-                MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-            if (status.MPI_TAG > 0) {
-                expons[status.MPI_TAG - 1] = buf;
+        } else {  // producer
+            buf = new double(sizeof(double));
+            std::cout << "The current process is = " << mynode;
+            for (int i = 0; i < n_elem; i++) {
+                buf[i] = exp(vect[i]);
+                MPI_Send(&buf[i], 1, MPI_DOUBLE, totnodes - 1, i, MPI_COMM_WORLD);
             }
-            MPI_Send(&k, 1, MPI_INT, status.MPI_SOURCE,
-                0, MPI_COMM_WORLD);
         }
-    } else {  // consumer
-        MPI_Status status;
-        buf = 0;
-        //for (int j = 0; j < n_elem; j++) {
-        MPI_Send(&buf, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
-        int killed = 0;
-        do {
-            double n = 0;
-            MPI_Recv(&n, 1, MPI_DOUBLE, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-            if (status.MPI_TAG == 0) {
-                killed++;
-            } else {
-                buf = exp(n);
-                MPI_Send(&buf, 1, MPI_DOUBLE, 0, status.MPI_TAG, MPI_COMM_WORLD);
-            }
-        } while (killed != n_elem);
     }
     // MPI_Buffer_detach(message_buffer, &message_buffer_size);
     // free(message_buffer);
