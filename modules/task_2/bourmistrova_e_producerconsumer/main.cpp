@@ -2,25 +2,29 @@
 #include <gtest-mpi-listener.hpp>
 #include <gtest/gtest.h>
 #include <math.h>
-
+#include <algorithm>
 #include <vector>
 
 #include "./producerconsumer.h"
 
 TEST(Producer_Consumer_MPI, Test_Eq) {
     int mynode;
+	int totnodes;
     MPI_Comm_rank(MPI_COMM_WORLD, &mynode);
+	MPI_Comm_size(MPI_COMM_WORLD, &totnodes);
     int num = 10000;
     std::vector<double> matrix(num);
     std::vector<double> ref_matrix(num);
-    if (mynode == 0) {
+    if (mynode == totnodes-1) {
         matrix = gen_input(num);
     }
 
     std::vector<double> par_sum = Parallel_method(matrix, num);
+	std::sort(par_sum.begin(), par_sum.end());
 
-    if (mynode == 0) {
+    if (mynode == totnodes - 1) {
         ref_matrix = calc_exp_pow_num(matrix);
+		std::sort(ref_matrix.begin(),ref_matrix.end());
         ASSERT_EQ(ref_matrix, par_sum);
     }
 }
