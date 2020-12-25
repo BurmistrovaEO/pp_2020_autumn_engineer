@@ -23,6 +23,7 @@ TEST(Parallel_Operations_MPI, Test_Sum) {
     if (mynode == 0) {
         int ref_sum = 0;
         ref_sum = Sequential_method(matrix, oper);
+        printf("Test %u", 1);
         ASSERT_EQ(ref_sum, par_sum);
     }
 }
@@ -42,6 +43,7 @@ TEST(Parallel_Operations_MPI, Test_Lower_Bound) {
     if (mynode == 0) {
         int ref_min_sum = 0;
         ref_min_sum = rows*columns * Sequential_method(matrix, oper);
+        printf("Test %u", 2);
         ASSERT_LE(ref_min_sum, par_sum);
     }
 }
@@ -61,6 +63,7 @@ TEST(Parallel_Operations_MPI, Test_Upper_Bound) {
     if (mynode == 0) {
         int ref_max_sum = 0;
         ref_max_sum = rows * columns * Sequential_method(matrix, oper);
+        printf("Test %u", 3);
         ASSERT_GE(ref_max_sum, par_sum);
     }
 }
@@ -80,6 +83,7 @@ TEST(Parallel_Operations_MPI, Test_Diff_Size_F) {
     if (mynode == 0) {
         int ref_sum = 0;
         ref_sum = Sequential_method(matrix, oper);
+        printf("Test %u", 4);
         ASSERT_EQ(ref_sum, par_sum);
     }
 }
@@ -99,6 +103,7 @@ TEST(Parallel_Operations_MPI, Test_Upper_Bound_P_S) {
     if (mynode == 0) {
         int ref_max_sum = 0;
         ref_max_sum = Sequential_method(matrix, oper);
+        printf("Test %u", 5);
         ASSERT_EQ(ref_max_sum, par_max_sum);
     }
 }
