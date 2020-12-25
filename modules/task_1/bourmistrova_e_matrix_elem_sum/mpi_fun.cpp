@@ -49,7 +49,7 @@ int Parallel_method(std::vector<int> matr, int n_lin, int n_col, std::string op)
     MPI_Comm_size(MPI_COMM_WORLD, &totnodes);
     MPI_Comm_rank(MPI_COMM_WORLD, &mynode);
     par_sum = 0;  // zero sum for accumulation
-    if (matr.size() <= totnodes) {
+    if (static_cast<int>(matr.size()) <= totnodes) {
         return Sequential_method(matr, op);
     }
     const int delta = (n_lin*n_col) / totnodes;
