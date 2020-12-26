@@ -10,9 +10,12 @@
 TEST(Parallel_sort, sort_random_vect) {
     int mynode;
     MPI_Comm_rank(MPI_COMM_WORLD, &mynode);
-
-    std::vector<int> vect = { 7, 11, -45, 0, 23, 44, -100 };
-    std::vector<int> res = { -100, -45, 0, 7, 11, 23, 44 };
+    std::vector<int> vect;
+    std::vector<int> res;
+    if (mynode == 0) {
+        vect = { 7, 11, -45, 0, 23, 44, -100 };
+        res = { -100, -45, 0, 7, 11, 23, 44 };
+    }
     double MPISortedS = MPI_Wtime();
     std::vector<int> sortVector = Parallel_sort(vect);
     double MPISortedE = MPI_Wtime();
@@ -26,8 +29,10 @@ TEST(Parallel_sort, sort_random_vect) {
 TEST(Parallel_sort, compare_time_sort) {
     int mynode;
     MPI_Comm_rank(MPI_COMM_WORLD, &mynode);
-
-    std::vector<int> vect = gen_input(5);
+    std::vector<int> vect;
+    if (mynode == 0) {
+        vect = gen_input(5);
+    }
     double MPISortedS = MPI_Wtime();
     std::vector<int> sortVector = Parallel_sort(vect);
     double MPISortedE = MPI_Wtime();
@@ -46,10 +51,12 @@ TEST(Parallel_sort, compare_time_sort) {
 TEST(Parallel_sort, compare_time_seq_shell_w_seq_ins) {
     int mynode;
     MPI_Comm_rank(MPI_COMM_WORLD, &mynode);
-
-    std::vector<int> vect = { 10, 6, 17, -2, -2 };
-    std::vector<int> res = { -2, -2, 6, 10, 17 };
-
+    std::vector<int> vect;
+    std::vector<int> res;
+    if (mynode == 0) {
+        vect = { 10, 6, 17, -2, -2 };
+        res = { -2, -2, 6, 10, 17 };
+    }
     if (mynode == 0) {
         double ShellS = MPI_Wtime();
         std::vector<int> sortVect_shell = Sequential_Shell(vect);
@@ -68,10 +75,12 @@ TEST(Parallel_sort, compare_time_seq_shell_w_seq_ins) {
 TEST(Parallel_sort, sort_one_elem) {
     int mynode;
     MPI_Comm_rank(MPI_COMM_WORLD, &mynode);
-
-    std::vector<int> vect = { -3 };
-    std::vector<int> res = { -3 };
-
+    std::vector<int> vect;
+    std::vector<int> res;
+    if (mynode == 0) {
+        vect = { -3 };
+        res = { -3 };
+    }
     std::vector<int> sortArray = Parallel_sort(vect);
 
     if (mynode == 0) {
@@ -82,10 +91,12 @@ TEST(Parallel_sort, sort_one_elem) {
 TEST(Parallel_sort, return_empty_vect) {
     int mynode;
     MPI_Comm_rank(MPI_COMM_WORLD, &mynode);
-
-    std::vector<int> vect = { };
-    std::vector<int> res = { };
-
+    std::vector<int> vect;
+    std::vector<int> res;
+    if (mynode == 0) {
+        std::vector<int> vect = { };
+        std::vector<int> res = { };
+    }
     std::vector<int> sortArray = Parallel_sort(vect);
 
     if (mynode == 0) {

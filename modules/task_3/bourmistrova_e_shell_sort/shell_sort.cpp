@@ -36,6 +36,8 @@ std::vector<int> Sequential_Shell(std::vector<int> vec) {
                 std::swap(vec[j], vec[j - h]);
             }
         }
+        if (h == 1)
+            break;
         h -= h / 3;  // decreasing h
     }
     return vec;
@@ -72,7 +74,9 @@ std::vector<int> Parallel_sort(std::vector<int> vect) {
         return vect;
     }
     if (totnodes == 1) {
-        return Sequential_Shell(vect);
+        if (mynode == 0) {
+            return Sequential_Shell(vect);
+        }
     }
     int lvect_size;  // local vector size
     int count;  //  number of used processes for do{}while loop
@@ -113,10 +117,12 @@ std::vector<int> Parallel_sort(std::vector<int> vect) {
                         MPI_Status status;
                         local_vect.resize(lvect_size);
                         MPI_Recv(&local_vect[0], lvect_size, MPI_INT, 0, tag, MPI_COMM_WORLD, &status);
+                        std::cout << "In process " << mynode;
                         local_vect = Sequential_sort(local_vect);
                         MPI_Send(&local_vect[0], lvect_size, MPI_INT, 0, proc + tag, MPI_COMM_WORLD);
                     }
                 }
+                MPI_Barrier(MPI_COMM_WORLD);
             }
             counter += totnodes;
             tag++;
@@ -149,6 +155,7 @@ std::vector<int> Parallel_sort(std::vector<int> vect) {
         }
         if (lvect_size == vect_size)
             tmp_size_count = 0;
+        MPI_Barrier(MPI_COMM_WORLD);
     }
     return vect;
 }
