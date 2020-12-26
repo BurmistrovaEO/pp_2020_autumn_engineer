@@ -64,7 +64,7 @@ std::vector<int> Parallel_sort(std::vector<int> vect) {
     std::vector<int> local_vect;  //  local_vector
 
     int vect_size = vect.size();
-    int tmp_size_count = vect.size();
+    int tmp_size_count = vect.size();  //  is used for count preparation and also repres number of go-throgths thr inp vect
 
     MPI_Comm_size(MPI_COMM_WORLD, &totnodes);
     MPI_Comm_rank(MPI_COMM_WORLD, &mynode);
