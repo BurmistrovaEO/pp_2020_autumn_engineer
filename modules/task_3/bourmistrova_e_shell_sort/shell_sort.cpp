@@ -25,6 +25,7 @@ std::vector<int> gen_input(int sz) {
     return vect;
 }
 std::vector<int> Sequential_Shell(std::vector<int> vec) {
+    std::vector<int> tmp(vec.size());
     int length = vec.size();
     int h = 1;
     while (h < length / 3) {
@@ -40,12 +41,14 @@ std::vector<int> Sequential_Shell(std::vector<int> vec) {
             break;
         h -= h / 3;  // decreasing h
     }
-    return vec;
+    copy(vec.begin(), vec.end(), tmp.begin());
+    return tmp;
 }
 
 
 
 std::vector<int> Sequential_sort(std::vector<int> vect) {
+    std::vector<int> tmp(vect.size());
     int size = vect.size();
     int k;
     for (int i = 1; i < size; i++) {
@@ -57,13 +60,15 @@ std::vector<int> Sequential_sort(std::vector<int> vect) {
             k++;
         }
     }
-    return vect;
+    copy(vect.begin(), vect.end(), tmp.begin());
+    return tmp;
 }
 
 std::vector<int> Parallel_sort(std::vector<int> vect) {
     int mynode;
     int totnodes;
     std::vector<int> local_vect;  //  local_vector
+    std::vector<int> tmp;
 
     int vect_size = vect.size();
     int tmp_size_count = vect.size();  //  is used for count preparation and also repres number of go-throgths
@@ -71,18 +76,24 @@ std::vector<int> Parallel_sort(std::vector<int> vect) {
     MPI_Comm_size(MPI_COMM_WORLD, &totnodes);
     MPI_Comm_rank(MPI_COMM_WORLD, &mynode);
     if (vect_size <= 1) {
-        return vect;
-    }
-    if (totnodes == 1) {
         if (mynode == 0) {
-            return Sequential_Shell(vect);
+            tmp = Sequential_sort(vect);
+            return tmp;
         }
     }
+    if (mynode == 0) {
+        if (totnodes == 1) {
+            tmp = Sequential_Shell(vect);
+            std::cout << "Totnodes == 1" << std::endl;
+            return tmp;
+        }
+    }
+
     int lvect_size;  // local vector size
     int count;  //  number of used processes for do{}while loop
     int tag = 0;  //  tag for send/recv operations
     int counter = 0;
-    int countProc;
+    int countProc = 0;
 
     while (tmp_size_count > 0) {
         tmp_size_count = tmp_size_count / 2;
@@ -95,17 +106,19 @@ std::vector<int> Parallel_sort(std::vector<int> vect) {
         tag = 0;
         counter = 0;
         lvect_size = vect_size / tmp_size_count;
+        int rest = vect_size % tmp_size_count;
         do {
             if (counter + countProc == tmp_size_count)
                 count = countProc;
             for (int proc = 0; proc < count; proc++) {
                 if (mynode == 0) {
                     local_vect.clear();
-                    for (int i = 0; i < lvect_size; i++) {
-                        local_vect.push_back(vect[proc + counter + tmp_size_count * i]);
+                    for (int i = 0; i < vect_size; i+= tmp_size_count) {
+                        local_vect.push_back(vect[proc + counter]);
                     }
                     if (proc == 0) {
                         local_vect = Sequential_sort(local_vect);
+                        lvect_size = local_vect.size();
                         for (int i = 0; i < lvect_size; i++) {
                             vect[counter + tmp_size_count * i] = local_vect[i];
                         }
@@ -115,10 +128,11 @@ std::vector<int> Parallel_sort(std::vector<int> vect) {
                 } else {
                     if (mynode == proc) {
                         MPI_Status status;
-                        local_vect.resize(lvect_size);
-                        MPI_Recv(&local_vect[0], lvect_size, MPI_INT, 0, tag, MPI_COMM_WORLD, &status);
+                        local_vect.resize(lvect_size + rest);
+                        MPI_Recv(&local_vect[0], count, MPI_INT, 0, tag, MPI_COMM_WORLD, &status);
                         std::cout << "In process " << mynode;
-                        local_vect = Sequential_sort(local_vect);
+                        local_vect.resize(count);
+                        Sequential_sort(local_vect);
                         MPI_Send(&local_vect[0], lvect_size, MPI_INT, 0, proc + tag, MPI_COMM_WORLD);
                     }
                 }
@@ -157,5 +171,6 @@ std::vector<int> Parallel_sort(std::vector<int> vect) {
             tmp_size_count = 0;
         MPI_Barrier(MPI_COMM_WORLD);
     }
-    return vect;
+    tmp = vect;
+    return tmp;
 }

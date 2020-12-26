@@ -17,12 +17,12 @@ TEST(Parallel_sort, sort_random_vect) {
         res = { -100, -45, 0, 7, 11, 23, 44 };
     }
     double MPISortedS = MPI_Wtime();
-    std::vector<int> sortVector = Parallel_sort(vect);
+    std::vector<int> test_vec = Parallel_sort(vect);
     double MPISortedE = MPI_Wtime();
     if (mynode == 0) {
         std::cout << std::fixed << std::setprecision(8) << "MPI_Sort_Time :    "
             << MPISortedE - MPISortedS << std::endl;
-        ASSERT_EQ(sortVector, res);
+        ASSERT_EQ(test_vec, res);
     }
 }
 
@@ -30,21 +30,24 @@ TEST(Parallel_sort, compare_time_sort) {
     int mynode;
     MPI_Comm_rank(MPI_COMM_WORLD, &mynode);
     std::vector<int> vect;
+    std::vector<int> vect2;
     if (mynode == 0) {
         vect = gen_input(5);
+        vect2.resize(vect.size());
+        copy(vect.begin(), vect.end(), vect2.begin());
     }
     double MPISortedS = MPI_Wtime();
-    std::vector<int> sortVector = Parallel_sort(vect);
+    std::vector<int> test_vec = Parallel_sort(vect);
     double MPISortedE = MPI_Wtime();
     if (mynode == 0) {
         double SortedS = MPI_Wtime();
-        std::vector<int> s_vect = Sequential_Shell(vect);
+        vect2 = Sequential_Shell(vect2);
         double SortedE = MPI_Wtime();
         std::cout << std::fixed << std::setprecision(8) << "MPI_Sort_Time :    "
             << MPISortedE - MPISortedS << std::endl;
         std::cout << std::fixed << std::setprecision(8) << "Mine :    "
             << SortedE - SortedS << std::endl;
-        ASSERT_EQ(sortVector, s_vect);
+        ASSERT_EQ(vect, vect2);
     }
 }
 
@@ -52,23 +55,24 @@ TEST(Parallel_sort, compare_time_seq_shell_w_seq_ins) {
     int mynode;
     MPI_Comm_rank(MPI_COMM_WORLD, &mynode);
     std::vector<int> vect;
-    std::vector<int> res;
+    std::vector<int> tmp;
+    std::vector<int> vect2;
     if (mynode == 0) {
         vect = { 10, 6, 17, -2, -2 };
-        res = { -2, -2, 6, 10, 17 };
+        vect2 = vect;
     }
     if (mynode == 0) {
         double ShellS = MPI_Wtime();
-        std::vector<int> sortVect_shell = Sequential_Shell(vect);
+        tmp = Sequential_Shell(vect);
         double ShellE = MPI_Wtime();
         double InsS = MPI_Wtime();
-        std::vector<int> sortVect_ins = Sequential_sort(vect);
+        vect2 = Sequential_sort(vect2);
         double InsE = MPI_Wtime();
         std::cout << std::fixed << std::setprecision(8) << "Shell_Sort_Time :    "
             << ShellE - ShellS << std::endl;
         std::cout << std::fixed << std::setprecision(8) << "Insertions_Sort_Time :    "
             << InsE - InsS << std::endl;
-        ASSERT_EQ(sortVect_shell, sortVect_ins);
+        ASSERT_EQ(tmp, vect2);
     }
 }
 
@@ -81,10 +85,10 @@ TEST(Parallel_sort, sort_one_elem) {
         vect = { -3 };
         res = { -3 };
     }
-    std::vector<int> sortArray = Parallel_sort(vect);
+    std::vector<int> test_vec = Parallel_sort(vect);
 
     if (mynode == 0) {
-        ASSERT_EQ(sortArray, res);
+        ASSERT_EQ(test_vec, res);
     }
 }
 
@@ -97,10 +101,9 @@ TEST(Parallel_sort, return_empty_vect) {
         std::vector<int> vect = { };
         std::vector<int> res = { };
     }
-    std::vector<int> sortArray = Parallel_sort(vect);
-
+    std::vector<int> test_vec = Parallel_sort(vect);
     if (mynode == 0) {
-        ASSERT_EQ(sortArray, res);
+        ASSERT_EQ(test_vec, res);
     }
 }
 
