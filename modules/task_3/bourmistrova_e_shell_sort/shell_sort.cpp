@@ -114,7 +114,7 @@ std::vector<int> Parallel_sort(std::vector<int> vect) {
                 if (mynode == 0) {
                     local_vect.clear();
                     for (int i = 0; i < vect_size; i+= tmp_size_count) {
-                        local_vect.push_back(vect[proc + counter]);
+                        local_vect.push_back(vect[proc + counter + i]);
                     }
                     if (proc == 0) {
                         local_vect = Sequential_sort(local_vect);
@@ -123,7 +123,7 @@ std::vector<int> Parallel_sort(std::vector<int> vect) {
                             vect[counter + tmp_size_count * i] = local_vect[i];
                         }
                     } else {
-                        MPI_Send(&local_vect[0], lvect_size, MPI_INT, proc, tag, MPI_COMM_WORLD);
+                        MPI_Send(&local_vect[0], local_vect.size(), MPI_INT, proc, tag, MPI_COMM_WORLD);
                     }
                 } else {
                     if (mynode == proc) {
@@ -132,8 +132,8 @@ std::vector<int> Parallel_sort(std::vector<int> vect) {
                         MPI_Recv(&local_vect[0], count, MPI_INT, 0, tag, MPI_COMM_WORLD, &status);
                         std::cout << "In process " << mynode;
                         local_vect.resize(count);
-                        Sequential_sort(local_vect);
-                        MPI_Send(&local_vect[0], lvect_size, MPI_INT, 0, proc + tag, MPI_COMM_WORLD);
+                        local_vect = Sequential_sort(local_vect);
+                        MPI_Send(&local_vect[0], local_vect.size(), MPI_INT, 0, proc + tag, MPI_COMM_WORLD);
                     }
                 }
                 MPI_Barrier(MPI_COMM_WORLD);
