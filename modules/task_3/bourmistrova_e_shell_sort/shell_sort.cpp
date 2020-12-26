@@ -27,19 +27,15 @@ std::vector<int> gen_input(int sz) {
 std::vector<int> Sequential_Shell(std::vector<int> vec) {
     std::vector<int> tmp(vec.size());
     int length = vec.size();
-    int h = 1;
-    while (h < length / 3) {
-       h = 3 * h + 1;
-    }
+    int h = length/2;
     while (h > 0) {
         for (int i = h; i < length; i++) {
-            for (int j = i; j > 0 && vec[j] < vec[j - h]; j -= h) {
-                std::swap(vec[j], vec[j - h]);
+            for (int j = i; j > 0 && j - h >= 0; j -= h) {
+				if(vec[j] < vec[j - h])
+					std::swap(vec[j], vec[j - h]);
             }
         }
-        if (h == 1)
-            break;
-        h -= h / 3;  // decreasing h
+        h = h / 2;  // decreasing h
     }
     copy(vec.begin(), vec.end(), tmp.begin());
     return tmp;
@@ -136,7 +132,6 @@ std::vector<int> Parallel_sort(std::vector<int> vect) {
                         MPI_Send(&local_vect[0], local_vect.size(), MPI_INT, 0, proc + tag, MPI_COMM_WORLD);
                     }
                 }
-                MPI_Barrier(MPI_COMM_WORLD);
             }
             counter += totnodes;
             tag++;
@@ -168,8 +163,7 @@ std::vector<int> Parallel_sort(std::vector<int> vect) {
             } while (counter < tmp_size_count);
         }
         if (lvect_size == vect_size)
-            tmp_size_count = 0;
-        MPI_Barrier(MPI_COMM_WORLD);
+            tmp_size_count = 0;        
     }
     tmp = vect;
     return tmp;

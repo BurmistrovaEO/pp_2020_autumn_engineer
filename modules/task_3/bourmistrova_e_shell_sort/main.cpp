@@ -47,7 +47,7 @@ TEST(Parallel_sort, compare_time_sort) {
             << MPISortedE - MPISortedS << std::endl;
         std::cout << std::fixed << std::setprecision(8) << "Mine :    "
             << SortedE - SortedS << std::endl;
-        ASSERT_EQ(vect, vect2);
+        ASSERT_EQ(test_vec, vect2);
     }
 }
 
